@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -37,11 +38,15 @@ class Mortgage(models.Model):
         elif dti > 0.4:
             risk_score += 1
 
-        # Credit Score
-        if self.credit_score >= 700:
+        # Credit Score Impact
+        if self.credit_score >= 750:
+            risk_score -= 2
+        elif self.credit_score >= 700:
             risk_score -= 1
         elif self.credit_score < 650:
             risk_score += 1
+        elif self.credit_score < 600:
+            risk_score += 2
 
         # Loan Type
         if self.loan_type == 'fixed':
@@ -60,3 +65,9 @@ class Mortgage(models.Model):
             return 'BBB'
         else:
             return 'C'
+
+    def clean(self):
+        if self.credit_score < 300 or self.credit_score > 850:
+            raise ValidationError("Credit score must be between 300 and 850.")
+        if self.loan_amount <= 0:
+            raise ValidationError("Loan amount must be positive.")
